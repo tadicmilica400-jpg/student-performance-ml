@@ -1,65 +1,55 @@
 # Student Performance Prediction
 
-A Python regression project exploring how study habits and contextual features relate to exam scores.
+## Project overview
 
-## Technologies
+A supervised-learning coursework project that compares linear regression and k-nearest-neighbours regression for predicting an `Exam_Score` target from tabular student-related features.
 
-Python, pandas, NumPy and scikit-learn.
+## Academic context and data policy
 
-## Method
+The original dataset was supplied for university coursework. Its source and redistribution permissions are currently unknown, so it is intentionally **not included** in this repository. Do not commit a copy unless its provenance and licence are confirmed.
 
-- Remove exact duplicate records.
-- Reserve 20% of the data as a held-out test set.
-- Fit missing-value imputation, encoding and scaling within each training fold.
-- Compare Linear Regression and KNN using five-fold cross-validation.
-- Select the model and number of neighbors using cross-validation MAE.
-- Evaluate the selected pipeline on the held-out test set using MAE, MSE and R².
+This project is an educational modelling exercise. Its predictions are not evidence of causal relationships and are not validated for grading, admissions or other decisions about students.
 
-Preprocessing and model selection use training data only. The pipeline also handles unseen categorical values.
+## Methodology
 
-## Installation
+1. Read a CSV file and remove exact duplicate rows.
+2. Validate the target and require at least 30 unique observations and one predictor.
+3. Reserve 20% of observations as a holdout set (`random_state=42`).
+4. Within a scikit-learn pipeline, median-impute and standardise numeric features; mode-impute and one-hot encode categorical features. Unknown categories are ignored at prediction time.
+5. On the training partition only, use shuffled five-fold cross-validation to compare linear regression with KNN values of `k` allowed by the fold size (up to 20).
+6. Select by mean absolute error, refit the selected pipeline on the training partition and evaluate once on the holdout set.
 
-Requires Python 3.10 or newer.
+Keeping preprocessing inside the pipeline prevents fitted imputation, scaling and encoding statistics from leaking from validation folds or the holdout set into model fitting.
+
+## Results and evaluation
+
+The program reports the selected model and `k`, cross-validation MAE for every candidate, and holdout MAE, MSE and R². No real-data scores are published because the original dataset is unavailable for independent reproduction. The synthetic tests check pipeline behaviour, not predictive quality on students.
+
+## Installation and usage
 
 ```bash
 python -m pip install -r requirements.txt
+python main.py --data /path/to/authorized/dataset.csv --output results/metrics.json
+python -m unittest -v test_pipeline.py
 ```
 
-## Usage
+### Compatible dataset contract
 
-```bash
-python main.py --data dataset.csv --output results/metrics.json
-```
+Authorized users should supply a CSV with a finite numeric target column named `Exam_Score`, at least one numeric or categorical predictor, and at least 30 unique rows after exact duplicates are removed.
 
-The output includes the selected model, cross-validation scores and final holdout metrics.
+Example coursework-style predictors include `Hours_Studied`, `Attendance`, `Previous_Scores`, `Teacher_Quality` and `Parental_Education_Level`; these are examples, not a guaranteed schema. Remove identifiers, free-text personal data and target-derived fields before training. Document the dataset source, licence, unit of observation and missing-value conventions separately.
 
-## Dataset
+## Repository structure
 
-The dataset is not included.
+- `main.py` — validation, preprocessing, model selection and metric export
+- `test_pipeline.py` — synthetic leakage/robustness and end-to-end checks
+- `requirements.txt` — runtime dependencies
 
-Provide a CSV containing:
+## Limitations and future improvements
 
-- A numeric target column named `Exam_Score`.
-- At least one numeric or categorical predictor.
-- At least 30 unique rows.
+- Random splitting assumes independent rows. Repeated students, classrooms, schools or time-ordered measurements require grouped or temporal validation.
+- Hyperparameter search is limited to KNN neighbour count; it does not tune distance metrics, weighting or linear regularisation.
+- No naive baseline, uncertainty intervals, subgroup diagnostics or fairness analysis are implemented.
+- Tests could not be executed during this audit because Python was unavailable in the review environment.
 
-Example predictors from the coursework include `Hours_Studied`, `Attendance`, `Previous_Scores`, `Teacher_Quality` and `Parental_Education_Level`.
 
-Remove identifiers and target-derived information before training. Use data you have permission to access and document its source.
-
-## Tests
-
-Synthetic pipeline checks are included:
-
-```bash
-python -m unittest test_pipeline.py
-```
-
-These checks do not establish performance on real student data.
-
-## Limitations
-
-- No real-data results have been verified for the revised pipeline.
-- Random splitting assumes independent observations. Repeated students or time-dependent records require an appropriate grouped or temporal split.
-- Predictions do not establish causal relationships.
-- This coursework project is not validated for student assessment decisions.
